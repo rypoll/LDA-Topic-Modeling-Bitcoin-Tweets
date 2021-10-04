@@ -1,0 +1,380 @@
+---
+title: "Dissertation Draft"
+author: "Ryan Pollard"
+date: "07/07/2021"
+output:
+  pdf_document: default
+  html_document:
+      fig_caption: true
+---
+
+htmltools::img(src = knitr::image_uri("C:/Users/T430/Google Drive/Upwork Jobs/210715 Gene project/Unicle_logo.jpg"), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px; width: 110px; height: 128px') # Added width and height as CSS
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r read libraries, include=FALSE}
+#READ IN LIBRARIES NEEDED
+library(tidyverse)
+library(knitr)
+library(tibbletime)
+library(anomalize)
+library(timetk)
+library(forecast)
+library(tseries)
+library(dplyr)
+library(lubridate)
+library(TSstudio)
+library(zoo)
+library(ggplot2)
+library(lmtest)
+```
+
+
+# 1. Text Analysis and NLP: A Background
+
+Data is increasingly becoming more important and more available to businesses and individuals alike. Businesses have so much data and with that comes the difficulty to manage that data. For example, a business might sell their goods on Amazon and receive thousands of customer reviews a day. We traditionally think of data as being spreadsheets of numbers however this textual-review data represents an indication, a piece of data, on the quality of that product. In the same way as reviews, social media represents a vessel of data that represents the thoughts and feelings of it's users. From casually browsing twitter for example, we can read a few tweets regarding the latest news event and after reading 5 to 10 tweets we could probably conclude how the users of twitter are feeling about this event.
+
+That browsing and reading of tweets is essentially a data gathering exercise to discern the opinion of the people. Since language is the way humans interface and naturally share data, it's completely natural to humans to  take these words on a screen from multiple tweets and form a single opinion about how people must be feeling about that event. For example, looking at tweets that speak about tax increases, we can read 10 tweets, 7 of which may criticize this change in policy, 2 of which may praise it, and 1 that is in between those two feelings. From this a reader of twitter can tell that the attitude to increasing taxes is largely negative.
+
+With the advent of smartphones across developed and developing countries, the ease of access of internet, the volume users voluntarily inputting text data has exploded. 
+
+In terms of analysis of this data, the problem with text data is it is unstructured, unlike numbers that represent financials or demographics with set numerical rules; and therefore it is inherently difficult to work with. Text often is hard to interpret to a machine, with it's  grammar, syntax rules and various patterns and as a result it isn't straight forward to carry out statistical techniques on text data.
+
+There are however rigorous statistical techniques that have been developed  that lets a machine interpret with text data. Under the umbrella known as "NLP" - Natural Language Processing, these techniques aim to understand text-based data.
+
+Natural Language Processing, where a Natural Language is any language that evolved with humans to communicate, uses the linguistic rules that every language has to extract information from pieces of text. It enables computers to process and understand human natural language.
+
+## 1.1 How computers use text data
+
+First a definition, a "document" is a single separate piece of text. In the context of tweets, a document would be one tweet. If we were analysing news articles, a document would be one article. Documents comprise a "corpus" which is just all the documents; our entire dataset.
+
+Machine learning techniques need numeric data. A logistic regression is a simple machine learning tool that can express the segmentation of a dependent variable with two groups as a function of its independent variables. With text data we have exactly the same framework.
+
+Perhaps we have 10 documents (let's say a document is one tweet, in this example), 5 of which give misinformation about covid, and 5 of which give true information about covid. We want to create a logistic regression such that we know the relationship between the text in each tweet and its label of misinformation/information. 
+
+The logistic regression cannot do this, because all the machine learning algorithms can only interpret numbers. The logical step then is to convert these documents (tweets, in our example) into numbers. This is done via vectorisation our document, and all the documents then is represented as a matrix where each row is a vector that represents the text in one of the documents. Using this matrix, we can then undertake machine learning techniques on our text data.
+
+First, each document (piece of text) is split so each word in the document is a data point. This is called tokenisation which is just a list of words that appear in each document. Then for each document, this list of words is vectorised usng one of the following techniques:
+
+1. Bag of words - a matrix where each word is a column, each row is a document (one piece of text data) and the number in each cell is the number of times the column's word appears in the row's text. See the image below for an example.
+
+```{r echo=FALSE, fig.cap = "Figure caption", out.width='100%', fig.asp=0.4}
+knitr::include_graphics("images/16034397439042_surfin bird bow.png")
+```
+
+
+2. TF-IDF - stands for “Term Frequency — Inverse Document Frequency”. This generates a matrix that assigns a weight to each word which signifies the importance of the word in the document and corpus. This is more sophisticated than the above as the frequency the word appears used across all the texts is used to assign an importance.
+
+3. word2vec -  uses a neural network model to learn word associations from a large corpus of text. Once trained, such a model can detect synonymous words or suggest additional words for a partial sentence. This is even more sophisticated than the above as context of the word is taken into account.
+
+Using these matrices, machine learning tehcniques can be used in order to classify documents and other operations.
+
+
+## 1.2 Applications
+
+* **Machine Translation** - translating text from one language to another. Becoming more accurate with the aid of Deep Learning.
+* **Speech Recognition**    
+* **Question Answering Systems** - For example chatbots and personal assistants such as Siri
+* **Contextual Recognition** - Getting meaning of words from the context of the sentence, not just using the definition of the word.
+* **Text Summarisation** - Taking a large piece of text and condensing it but retaining the original meaning .
+* **Text Categorisation** - Classifying texts. For example, perhaps given a piece of text, a tweet in this example, analysing the words we could classify it as a tweet that contains misinformation about covid to a certain level of accuracy using machine learning techniques.
+* **Text Analytics** - Deriving insights from text data. Methods inclue clustering, summarisation, sentiment analysis. An example application of this is Spam detection. Statistical techniques are used to classify certain emails as spam.
+
+
+
+
+<!-- //from] -->
+<!-- wiki 2000s: With the growth of the web, increasing amounts of raw (unannotated) language data has become available since the mid-1990s. Research has thus increasingly focused on unsupervised and semi-supervised learning algorithms. Such algorithms can learn from data that has not been hand-annotated with the desired answers or using a combination of annotated and non-annotated data. Generally, this task is much more difficult than supervised learning, and typically produces less accurate results for a given amount of input data. However, there is an enormous amount of non-annotated data available (including, among other things, the entire content of the World Wide Web), which can often make up for the inferior results if the algorithm used has a low enough time complexity to be practical. -->
+
+
+
+<!-- from dataversity -->
+<!-- Natural Language Processing (NLP) is an aspect of Artificial Intelligence that helps computers understand, interpret, and utilize human languages. NLP allows computers to communicate with people, using a human language. Natural Language Processing also provides computers with the ability to read text, hear speech, and interpret it. NLP draws from several disciplines, including computational linguistics and computer science, as it attempts to close the gap between human and computer communications. -->
+
+<!-- Generally speaking, NLP breaks down language into shorter, more basic pieces, called tokens (words, periods, etc.), and attempts to understand the relationships of the tokens. This process often uses higher-level NLP features, such as: -->
+
+<!-- Content Categorization: A linguistic document summary that includes content alerts, duplication detection, search, and indexing. -->
+<!-- Topic Discovery and Modeling: Captures the themes and meanings of text collections, and applies advanced analytics to the text. -->
+<!-- Contextual Extraction: Automatically pulls structured data from text-based sources. -->
+<!-- Sentiment Analysis: Identifies the general mood, or subjective opinions, stored in large amounts of text. Useful for opinion mining. -->
+<!-- Text-to-Speech and Speech-to-Text Conversion: Transforms voice commands into text, and vice versa. -->
+<!-- Document Summarization: Automatically creates a synopsis, condensing large amounts of text. -->
+<!-- Machine Translation: Automatically translates the text or speech of one language into another. -->
+
+## 1.3 Supervised and Unsupervised Machine Learning
+
+Supervised machine learning is taking already labeled data and using it to express the relationship between the labels and the indpendent variables in the data. In our running example it would mean taking twitter data in regards to covid and manually labeling them "misinformation" is it contains misinformation and "information" is it contains real information. We could then explore the relationship between the text and the labels and use this relationship to predict if a new tweet that hasn't been labeled as having misinformation to a certain percent of accuracy.
+
+However, since there is exponentially more and more text information available it is impossible to label the data in this way. Therefore it is common to apply unsupervised (unlabeled) statistical techniques to text data. These refer to the family of machine learning algorithms that try to discover latent hidden structures and patterns in data from their various attributes and features. Several unsupervised learning algorithms are also used to reduce the feature space, which is often of a higher dimension to one with a lower dimension. This dimensionality reduction can be seen as taking a large number of document and assigning them into a relatively small amount of groups, where each group has its own topic where the topic describes broadly the type of tweets the group contains.
+
+
+# 2. Topic Models
+
+## 2.1 Introduction
+
+
+Imagine we have 20,000 tweets that express opinions about Covid. Using unsupervised machine learning and the vectorisation of text explained above so we can mathematically express and analyse the text in each tweet, we could group these tweets into 3 groups, where the tweets in one group 1 would contain text that speaks about covid cures, group 2 would have tweets about covid vaccines and group 3 about covid prevention. To reach this goal, we use a range of techniques called Topic Models.
+
+Topic models extract the distinguishing concepts, or topics, from the set of words in the corpus (that is, all the documents). They allow us, without human intervention, to group up documents quickly into topics. These topics can include opinions or facts. The models then use statistical techniques to explore the hidden and latent structures in the corpus in order to group up documents. 
+
+
+## 3.2  Methods for topic modeling
+
+There are various algorithms to carry out Topic Modelling.
+
+We cover the following three methods:
+* Latent Semantic Indexing
+* Latent Dirichlet Allocation
+* Non-negative matrix factorization
+
+### 3.2a Latent Semantic Indexing
+
+Latent Semantic Analysis simply finds groups of documents with the same words. The LSA approach to topic modeling (also known as Latent Semantic Indexing) identifies themes within a corpus by creating a sparse term-document matrix, where each row is a token and each column is a document. Each value in the matrix corresponds to the frequency with which the given term appears in that document. Singular Value Decomposition (SVD) can then be applied to the matrix to factorise into matrices that represent the term-topics, the topic importances, and the topic-documents.
+
+Using the derived diagonal topic importance matrix, we can identify the topics that are the most significant in our corpus, and remove rows that correspond to less important topic terms. Of the remaining rows (terms) and columns (documents), we can assign topics based on their highest corresponding topic importance weights.
+
+
+### 3.2b Non-negative matrix factorization
+
+One way to find the hidden topics of a corpus is the factorization of the "document-term matrix" - this is the a matrix with the rows being the documents and the columns being the words in the whole corpus - and if a docment contains a particular word in the corpus it gets a value of 1 in that cell. This matrix has only positive-value elements and so  we can use methods from linear algebra that allow us to represent the matrix as the product of two other nonnegative matrices. The original matrix is called V, and the factors are W and H:
+
+$$
+V \approx W \cdot H
+$$
+
+
+
+
+In the context of text analytics, both W and H have an interpretation. The matrix W has the same number of rows as the document-term matrix and therefore maps documents to topics (document-topic matrix). H has the same number of columns as features, so it shows how the topics are constituted of features (topic-feature matrix). The number of topics (the columns of W and the rows of H) can be chosen arbitrarily. The smaller this number, the less exact the factorization.
+
+
+### 3.2c Latent Dirichlet Allocation
+
+LDA considers each document as consisting of different topics, so each document is a mix of different topics. Also, the topics are made up of words. To ensure that the number of topics per document is low and to have only a few important words constituting the topics, LDA uses a Dirichlet distribution, a Dirichlet prior. This is applied both for assigning topics to documents and for assigning words to the the topics. 
+
+After the initial assignments, a generative process begins. It uses the Dirichlet distributions for topics and words and tries to re-create the words from the original documents with stochastic sampling. This process has to be iterated many times and is therefore computationally intensive. On the other hand, the results can be used to generate documents for any identified topic.
+
+
+For a given corpus of documents, each document can be represented as a statistical distribution of a fixed set of topics.
+
+
+LDA assumes that each document is generated by a statistical generative process.  That is, each document is a mix of topics, and each topic is a mix of words. 
+
+
+LDA consists of two matrices. The first matrix describes the probability or chance of selecting a particular word when sampling a particular topic. This can be seen as the distribution of words for each topic. The second matrix describes the chance of selecting a particular topic when sampling a particular document. This second table can be seen as a distribution of topics for each document. These two matrices take the form of a Dirichlet distribution. So by the end, each document has a distribution of topics and it the document can be assigned to the most likely topic.
+
+The first matrix can be represented as this, which is probability distribution of words in topics.
+
+w - word
+t - topic
+d - document
+
+
+$$
+\phi_{wt} = P(w|t)
+$$
+
+The second matrix can be represented as this, which is the probability distribution of topics in documents.
+
+
+$$
+\theta_{td} = P(t|d)
+$$
+
+The probability of a word given a document is:
+
+
+$$
+P(w|d) = \sum_{t\epsilon T} P(w|t,d)P(t|d)
+$$
+
+where T is the total number of topics.
+
+Assuming conditional independence we can say:
+
+$$
+P(w|t,d) = P(w|t)
+$$
+
+and hence:
+
+$$
+P(w|d) = \sum_{t\epsilon T}^{T} P(w|t)P(t|d)
+$$
+
+Which can be seen as 
+
+$$
+P(w|d) = \sum_{t\epsilon T}^{T}\phi_{wt}\cdot\theta_{td}
+$$
+Which is similar to the Singular Value Decomposition described above.
+
+The Dirichlet distribution has two parameters:
+
+$$\alpha$$ - controls how different the probabilities will be for words in the topics.
+$$\beta$$ - controls how different the probabilities will be for topics in the document.
+
+To get the values for both matrices, start by randomly assigning values in the matrices.
+
+1. Randomly choose a topic from the distribution of topics in a document based on their assigned values.
+2. Next, based on the distribution of words for the chosen topic, select a word at random and put it in the document
+3. Repeat this step for the entire document
+
+In this process, if our guess of the values are wrong, then the actual data that we observe will be very unlikely under our assumed values and data generating process. So we are trying to maxmise the likelihood of the data given the two matrices.
+
+To identify the correct values, we will use Gibbs sampling. 
+
+(How deep to go with the theory and explanation of Gibbs )
+
+https://medium.com/analytics-vidhya/topic-modeling-using-lda-and-gibbs-sampling-explained-49d49b3d1045
+
+
+
+## The Appropriate Method for Topic Modeling
+
+
+
+
+The only difference is that LDA adds a Dirichlet prior on top of the data generating process, meaning NMF qualitatively leads to worse mixtures. It fixes values for the probability vectors of the multinomials, whereas LDA allows the topics and words themselves to vary.
+
+Thus, in cases where we believe that the topic probabilities should remain fixed per document (oftentimes unlikely)—or in small data settings in which the additional variability coming from the hyperpriors is too much—NMF performs better.
+
+
+
+
+
+## From video, LDA
+
+The input is a corpus of documents where each documents is a collection of words. Also there is an input K, the number of topics we want to discover. We choose K. For each topic, there are a group of words associated with that topic.
+
+For each document we obtain what topics are expressed in that document. 
+
+In the LSA approach, SVD is used which is Matrix Factorisation. That is trying to decompose the matrix into two smaller matrices. In the figure below of the two decomposed matrices, the first shows all the documents as rows and the topics as columns. The second matrix contains all the topics as rows and the columns as words. So the documents are a distribution of topics and the topics are a distribution of words.
+
+LDA uses a different method which uses a *"Generative Process"*. That means we use latent variables and probabilities to see how the data might have been generated. 
+
+
+
+```{r echo=FALSE, fig.cap = "Figure caption1", out.width='100%', fig.asp=0.4}
+knitr::include_graphics("images/SVD.png")
+```
+
+
+The Dirichlet distribution is a distribution over multinomial distribution. From the figure below the multinomial distribution can be parameterised as a vector that sum to 1 and so it can be shown as a triangle through which points are selected with the position depending on the  parameters. 
+
+
+```{r echo=FALSE, fig.cap = "Figure caption2", out.width='100%', fig.asp=0.4}
+knitr::include_graphics("images/dirichlet1.png")
+```
+
+Multinomial distributions can be drawn from a Dirichlet distribution. In the figure below we can see changing the parameter $$\alpha$$, which represents the variance, of the Dirichlet distribution that the multinomial distributions variance is different. In the equation below, $$m_k$$ represents the mean and is analgous to centre of the Dirichlet distribution. When $$\alpha * m = 1 $$ the right hand side of the equation becomes 1 (as the exponent is 0) (every multinomial vector is raised to 0) so all of the vectors $$p_k$$ are equiprobable as seen in the top left of figure 4. As \alpha gets larger, the probability distribution concentrates around the mean.
+
+If $$\alpha < n$$ where n is the number of outcomes in the multinomial distribution. When this happens, the probability mass is pushed to the edges of the simplex (bottom right). This means that there isn't too many outcomes with high probability. The advantage of this approach is  that not all topics have high probability, meaning some documents can have 1 or 2  substantial topics. With the Matrix Factorisation approach each document had a value for each topic, so a document is assumed to be made up of all the topics in the analysis at varying proportions. LDA has the ability to assume a document is made up a small number of topics which is a natural assumption as often pieces of texts only deal with one or two topics, for example, Technology and Science.
+
+```{r echo=FALSE, fig.cap = "Figure caption3", out.width='100%', fig.asp=0.4}
+knitr::include_graphics("images/Dirichlet_eq.png")
+```
+
+```{r echo=FALSE, fig.cap = "Figure caption4", out.width='100%', fig.asp=0.4}
+knitr::include_graphics("images/dirichlet2.jpg")
+```
+
+
+
+
+
+# 3. Project Aim
+
+
+## 3.1 Motivation for and summary of the project
+
+In early 2021, the impact of social media on the stock market gained notoriety when the price of GameStop (GME) stock went from hovering around $20 to reaching the lofty heights of $347 dollars in just one month. This increase was  attributed to the collective frenzy that took place on the social media platform of Reddit, specifically the sub-forum known as "wallstreetbets" that encouraged users to buy more stock which in turn elevated the stock to those high prices.
+
+This was a clear demonstration of how public word-of-mouth can impact the stock market, but this kind of thing has happened for time immemorial. Before social media, word-of-mouth opinions about stocks would have also made an impact on the price of stocks. The difference now is these opinions are much more visible, and important for this project, they are recorded. 
+
+This project looks to investigate how public opinion on social media impacts the price of not only stock, but also cryptocurrencies - and we group these two by calling them *"assets"*. These opinions of financial assets can be taken from Twitter using tweets posted.
+
+
+
+## 3.2 An outline of the approach to be taken
+
+There are two main steps when it comes to approaching this analysis.
+
+1. Assigning topics to tweets that represent opinions about stocks and cryptocurrency.
+2. Finding the relationship between these opinions and change in asset price.
+
+### 1. Classifying posts/articles
+
+If you read social media posts and news articles you may not remember word for word what the post said, or every single point made in the text, however, you will come away knowing the general feeling, or sentiment/opinion of what you just read. For example, perhaps a social media poster may simply say *"I believe Bitcoin is going to be worth £1.2 million one day* and although the poster's believed price may not be remembered, the sentiment of the post - that bitcoin is going to increase in value - will be.
+
+In this this example for simplicity and demonstratitive purposes, we consider trying to assign tweets to just two topics - "positive" or "negative"; the above example tweet can be classified as a *"positive"* sentiment for bitcoin. A post using skeptical language in regards to bitcoin can be classified as *"negative"*. 
+
+A  *Probabilistic Topic Modeling* which was applied to machine learning and outlined by David Blei et al can be used to analysed posts/articles for the type of language they use regarding a certain asset at a time point, and the frequency of positive or negative posts can found for a particular asset. This then gives us a "sentiment score" - telling what is the public opinion of the asset, is it mainly positive, negative, or equal? This type of analysis is known as *Natural Language Processing (NLP)*. 
+
+Classifying a post/article into positive and negative is a useful way to gauge public opinion, however, positive and negative posts can be classified into further topics For example, how positive is the post, perhaps the language of the post is hugely positive, so it can be classified as *"very positive"*. Perhaps the language used is positive, but tinged with some negativity of skepticism - and this could be classified as *"weakly positive"*. Further still, within the trading community there are trading behaviours known as *bearish* (many people following the trend of selling) and *bullish* (many people following the trend of buying) and the posts can be further classified into these groups.
+
+
+To summarise the above, the use of Topic modeling algorithms analyses the words of the original texts to uncover the underlying topics that run through the tweets and how we can see how they change over time, depending on when the tweet was posted. Probabilistic Topic Modeling uses Latent Dirichlet Allocation and Gibbs Sampling to allocate posts/articles to topics
+
+
+
+
+## Power of twitter data (look at papers for this )
+
+TBD
+
+## Problem with twitter data (chatbots)
+
+
+TBD
+
+
+
+
+
+
+
+
+## Sources
+
+interesting paper
+predicting stock markets with twitter data
+https://www.sciencedirect.com/science/article/pii/S2405918817300247
+
+
+https://www.youtube.com/watch?v=yK7nN3FcgUs
+video explaining lda
+
+
+
+
+
+
+
+https://www.frontiersin.org/articles/10.3389/frai.2020.00042/full
+- this paper says nmf and lda best for short text
+
+- why lda is good
+
+https://www.quora.com/What-are-the-pros-and-cons-of-LDA-and-NMF-in-topic-modeling-Under-what-situations-should-we-choose-LDA-or-NMF-Is-there-comparison-of-two-techniques-in-topic-modeling
+
+
+
+
+- another good one explaining the diff between lda and nmf
+
+https://www.quora.com/What-is-the-difference-between-NMF-and-LDA-Why-are-the-priors-of-LDA-sparse-induced
+
+paper of lda vs nmf which rules in favour of nmf
+http://science-gate.com/IJAAS/Articles/2019/2019-6-10/1021833ijaas201910015.pdf
+
+
+
+

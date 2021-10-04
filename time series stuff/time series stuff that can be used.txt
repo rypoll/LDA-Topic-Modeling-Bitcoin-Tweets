@@ -1,0 +1,24 @@
+good article talking about correlation causation
+https://www.svds.com/avoiding-common-mistakes-with-time-series/
+
+
+
+
+ice_cream_heater_df = ice_cream_heater_df[['ice cream', 'heater']]
+model = VAR(ice_cream_heater_df)
+model_fit = model.fit(maxlags=13)
+model_fit.summary()
+
+- the data is in each paper
+- the url is associated with the data 
+- data will have 20k genes
+- columns are the cells
+- the columns are different, so these are different
+- in public domaine there is 100million cells
+- the idea is to use all 100 million cells
+- the idea is to run the model algoritm on different subsets of cells, need to find the cells 
+- we need to catologue the data 
+- tdm is to summarise the document, its a cool feature
+- get gene ranking, talk about this gene
+- 
+

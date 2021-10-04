@@ -1,0 +1,55 @@
+library(tm) #to process text
+library(topicmodels)
+library(dplyr)
+library(tidytext)
+library(tidyverse)
+library(SnowballC) # for stemming
+library(stringr)
+library(ldatuning)
+library(gutenbergr)
+
+
+data2016 <- read.csv(file = 'data/2016_ryan_data.csv')
+data2017 <- read.csv(file = 'data/2017_ryan_data.csv')
+data2018 <- read.csv(file = 'data/2018_ryan_data.csv')
+data2019 <- read.csv(file = 'data/2019_ryan_data.csv')
+data2020 <- read.csv(file = 'data/2020_ryan_data.csv')
+head(data2016)
+
+data <- rbind(data2016, data2017, data2018, data2019, data2020)
+
+data_btc <- dplyr::filter(data, grepl('btc|BTC', text))
+data_btc <- dplyr::filter(data_btc, !grepl('Current price|current price|current rate|Current rate', text))
+
+
+#install.packages("ldatuning")
+library("ldatuning")
+
+
+
+
+
+
+
+## You need to use VectorSource before using Corpus
+library(tm)
+
+data_btc$text1 <- tolower(gsub('[[:punct:]0-9]', ' ', data_btc$text))
+
+
+myCorpus <- Corpus(VectorSource(data_btc$text1))
+myCorpus <- tm_map(myCorpus,  removeWords, stopwords("english"))
+tdm <- TermDocumentMatrix(myCorpus)
+dtm <- DocumentTermMatrix(Data_clean)
+
+
+
+result <- FindTopicsNumber(
+  dtm,
+  topics = seq(from = 2, to = 50, by = 1),
+  metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
+  method = "Gibbs",
+  control = list(seed = 77),
+  mc.cores = 2L,
+  verbose = TRUE
+)

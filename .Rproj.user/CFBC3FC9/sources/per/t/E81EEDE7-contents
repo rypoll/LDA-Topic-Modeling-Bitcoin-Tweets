@@ -1,0 +1,580 @@
+---
+title: 'Time Series: Investigating Temperature data in Melbourne, Australia during
+  the  years 1981-1990.'
+author: "Anonymous"
+date: "March 2021 \n Word count: 2429 (excluding tables, plots and captions) "
+output:
+  pdf_document: default
+  html_document: default
+  bookdown::pdf_document2: default
+---
+\newpage
+\clearpage
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# output:
+#   bookdown::pdf_document2:
+#     fig_caption: yes
+#   pdf_document: default
+#   bookdown::html_document2:
+#     fig_caption: yes
+```
+
+# Aim
+
+This project aims to investigate a given piece time series data and investigating methods through which the a statistical model can be built that represents how the data moves through time - eventually forecasting that data for future dates.
+
+
+# The Data
+A time series data set consisting of daily maximum temperatures (degrees C) in Melbourne will be used in this analysis. The data set covers a period of 1 January 1981 to 31 December 1990 and the data will be split into two datasets, the train dataset will contain the dates 01/01/1981 - 31/01/1988 and and the test dataset which will contain the dates 01/01/1989 to 31/12/1990.
+
+The train data will be used the build the statistical model. The train dataset will be used to compare how accurate our models forecasts into the 2 years after our train data, 1989 and 1990
+
+# Data Preparation
+
+
+```{r read libraries, include=FALSE}
+#READ IN LIBRARIES NEEDED
+library(tidyverse)
+library(knitr)
+library(tibbletime)
+library(anomalize)
+library(timetk)
+library(forecast)
+library(tseries)
+library(dplyr)
+library(lubridate)
+library(TSstudio)
+library(zoo)
+library(ggplot2)
+library(lmtest)
+```
+
+The data gives daily temperatures values for the dates discussed. However, daily data produces graphs are are noisy and difficult to interpret visually. Monthly data is also easier to work with in regards to data cleaning and model building. For that reason the data is converted to monthly data, taking the average temperature of each month.
+
+There is no missing data in the dataset.
+
+```{r read data and convert to month, include=FALSE}
+#READ IN DATA AND CONVERT TO TIME SERIES DATA
+temp <- read.csv("data/TempMelbPRO.csv")
+#CHECK MISSING = 0 
+sum(is.na(temp))
+#CHANGE MONTH FORMAT SO CAN BE USED BY R
+temp1 <- temp %>%
+  mutate(Date = as.Date(Date, format = "%d/%m/%Y"))
+#ALSO CHANGE DAILY DATA TO MONTHLY DATA
+temp_month <- temp1 %>% group_by(month=floor_date(Date, "month")) %>%
+  summarize(temp=mean(temp))
+#CHANGE TO TS DATA
+y <- ts(temp_month$temp, frequency=12, start=c(1981,1))
+#SPLIT THE DATA IN TRAIN AND TEST
+ysplit <- ts_split(y, sample.out = 24)
+
+ytrain <- ysplit$train
+ytest <- ysplit$test
+```
+
+Figure \ref{fig:raw-data-plot} shows the monthly temperature data through the years with a 12 month moving average line. 
+
+It shows data that is seasonal, as expected, in January we have high values for temperature and mid-year we have low values for temperature, summer months and winter respectively in Melbourne, Australia. 
+
+The orange bar shows that there are temperature trends across the decade. From 1981 to 1984 there is a drop in average temperature, seeing as a decreasing orange bar up until 1984. It then increases and decreases some more through the years; seemingly there is an underlying temperature trend in this data. 
+
+```{r raw-data-plot, echo=F, fig.cap="Monthly temperature values through time (blue line) with 12 month monthly average line (orange line) ", warning=FALSE, out.width='100%', fig.asp=0.4}
+#monthly with year moving average
+ggplot(temp_month, aes(month, temp)) + 
+  geom_line(color = "#00AFBB", size = 2
+            #, linetype="dashed"
+            ) +
+  xlab("Time (years)") +
+  ylab("Temperature (degrees C)") +
+  ggtitle("Temperature values through time with 12 month moving average") +
+  #geom_point(pch=21, fill="#FF0000AA") +
+  geom_line(aes(y=rollmean(temp, 12, na.pad=TRUE)), size=1, color="orange") +
+  theme_minimal()
+```
+
+## Decomposition
+
+To understand the data better the data is decomposed. This breaks up the time-series into three underlying variables - trend, seasonality and residue. Using this method it's possible to see how temperature has changed through the years easily without the effect of seasonality. 
+
+The decomposition plot in Figure \ref{fig:decom-plot} is broken down into 4 components: 
+
+
+Figure \ref{fig:decom-plot} shows the seasonal aspect as we expected, high temperatures in summer and low temperatures in winter and follows a 12-month pattern. We can now see there are trends in the data when we look at the 3rd trend chart, from 1982 to 1987 temperature was on the way down and from 1987 onward temperature picked back up.
+
+
+```{r decom-plot, echo=F,, fig.cap="Decomposition of the time-series data", warning=FALSE, out.width='100%', fig.asp=0.8}
+#str(y)
+x1=stl(y, s.window="periodic")
+plot(x1)
+
+
+##1. **Original Data**: This is just the raw data plotted through time as we saw in Figure \ref{fig:decom-plot}. 
+##2. **Seasonal**: This shows the pattern of the 12 month seasonality.
+##3. **Trend**: Shows how temperature changes through time taking out the effect of seasonality.
+##4. **Remainder**: Taking out the seasonal and trend parts, this gives the remainder and often can be attributed to ##be noise. 
+```
+
+
+
+## Anomaly Detection
+
+The presence of anomalies is looked at in order to understand the data better and investigate if there are points in the data that could have a big influence on the model build and thus have an impact on the forecast. 
+
+In order to do anomaly detection the time-series is decomposed as in Figure \ref{fig:decom-plot} and there is an upper and lower threshold created; the data points which are outside of these thresholds are then identified as anomalies. 
+
+
+
+
+
+
+```{r anomalies, include=FALSE}
+#DO ANOMALIES ANALYSIS
+df <- as_tibble(temp_month)
+
+df2 <- df
+df2$month <- df$temp
+df2$temp <- df$month
+colnames(df2)[1] <- "temp"
+colnames(df2)[2] <- "month"
+
+df_anomalized <- df2  %>%
+  time_decompose(temp, merge = TRUE) %>%
+  anomalize(remainder) %>%
+  time_recompose()
+```
+
+
+Figure \ref{fig:anom-plot} shows the time-series data plotted through time and one anomaly plot is highlighted in January 1981. This had a particularly high value for January 1981. 
+
+
+
+```{r anom-plot, echo=F, fig.cap="Time-series data plotted through time with anomalies highlighted in red.", warning=FALSE, out.width='100%', fig.asp=0.4}
+df_anomalized %>% plot_anomalies(ncol = 3, alpha_dots = 0.75) +
+  xlab("Time (years)") +
+  ylab("Temperature (degrees C)") +
+  labs(title="Temperature data plotted over time indicating anomalies in red") +
+  theme_minimal()
+```
+
+
+Figure \ref{fig:anom-plot2} shows the time-series data decomposed with the same anomaly highlighted. 
+
+
+```{r anom-plot2, echo=F, fig.cap="Decomposition of time-series data showing the anomalies", warning=FALSE, out.width='100%', fig.asp=0.6}
+p1 <- df_anomalized %>%
+  plot_anomaly_decomposition() +
+  ggtitle("Decomposition showing anomalies")
+p1
+```
+
+Only one anomaly is detected in the data and its value isn't so high that it's a cause for a concern, seemingly it is part of a trend that in 1981 there were higher temperatures in Melbourne.
+
+
+## Stationarity
+
+It's important for time-series data to be stationary. This means the time series doesn't change over time - it has a constant mean and a constant variance. This is important in order for the statistical model to represent the time-series as best as possible. 
+
+First we deal with seasonality. We confirm that there is a 12 month repeating trend to the seasons using a lag plot. If there is no relationship between the data and the data from the past, the lag plot will show a random pattern. 
+
+Figure \ref{fig:lag-plot} shows a strong positive correlation line for lag 12 indicating that there is a positive correlation between the data and the data 12 months ago - indicating yearly seasonality. 
+
+
+```{r lag-plot, echo=F, fig.cap="Lag plot of time-series data showing existence of seasonality as seen with strong poisitive correlation line in lag = 12.", warning=FALSE, out.width='100%', fig.asp=0.6}
+lag.plot(y,lags=12,layout=c(4,3), title="hel")
+```
+The seasonality is taken out of the time-series by taking away the temperate values of 12-months prior from the temperature values. After doing this, an Augmented Dickey Fuller test is used to see if the data is stationary.If the data is stationary the p-value will be below 0.05.
+
+The result of the test gives a p-value of 0.2 (2.dp) indicating the deseasonalised data is not stationary. 
+
+
+
+```{r adf test no seas, include=F}
+#take out season
+dy_year <- diff(y, lag= 12)
+#ts.plot(dy_year)
+adf.test(dy_year) #p-value = 0.1986
+```
+
+Figure \ref{fig:deseas-plot} shows the deseasonalised data. It does not look completely random as there are up and down trends seen through the years and doesn't stay around temperature value 0 very often. 
+
+```{r deseas-plot, echo=F, fig.cap="Deseasonalised time series", warning=FALSE, out.width='100%', fig.asp=0.6}
+ts.plot(dy_year, gpars=list(xlab="Time (years)", ylab="Deseasonalised Temmperature"))
+```
+
+This trend is taken out by differencing the data after taking away the seasonality - taking away the the previous month value from each of the temperature values. 
+
+The ADF test now gives a p-value of 0.01 and Figure \ref{fig:diffd-plot} shows the deseasonalised and differenced data, showing a white noise pattern and a constant mean and variable - this data is now ready to do time-series analysis. 
+
+This type of differencing is called first differencing. If this didn't work we would continue to take the 2nd, 3rd, 4th etc difference until the data is stationary. 
+
+```{r adf test no seas and diffd, include=F}
+ddy_year <- diff(dy_year)
+#ts.plot(ddy_year)
+adf.test(ddy_year) # p-value = 0.01
+```
+```{r diffd-plot, echo=F, fig.cap="Deseasonalised and differenced time-series showing a pattern similar to white noise", warning=FALSE, out.width='100%', fig.asp=0.6}
+ts.plot(ddy_year,  gpars=list(xlab="Time (years)", ylab="Deseasonalised and Differenced Temmperature"))
+```
+
+## Which model is used - the Box Jenkins method.
+
+Now the data is ready to begin a model build it's necessary to investigate what type of model best suits the data. To do this we use the Box Jenkins method. 
+
+Looking at the ACF and the PACF of the differenced and deseasonalised data  will determine what type of model to be used. 
+
+For an AR model the PACF must cut off after lag p with not many lags deemed significant. The ACF must exponentially decay. From Figure \ref{fig:pacf-plot} this does not happen - the PACF shows many significant lags.
+For an MA model the ACF must cut off after lag q with not many significant values and the PACF must show an exponential decay. From Figure \ref{fig:acf-plot} both of these criteria are not met.
+For an ARIMA model, the PACF and ACF must tail off and complex behaviors of the lags are allowed . This does happen in both our PACF and ACF.
+
+The PACF and ACF both decay which is necessary to build a model. 
+
+A Seasonal ARIMA model is chosen on this basis, and the fact we do not have native stationary data. However, choosing the order of the ARIMA is difficult using the ACF and PACF plots. 
+
+There are 4 significant values for the ACF, and the PACF has 8 significant separate points - but 3 of these points at the start seem to be related to the first point so we consider the PACF to have 5 significant points For this reason we may choose p and q to be 5 and 4. 
+
+Selection of the best model is not an exact science and in this project different models will be tried and tested against eachother - and parsimonious models will be tended towards. 
+
+Since the ACF shows a big spike in the first lag and a decay after, perhaps q = 1 would be a good selection. A similar argument can be made for the PACF and perhaps p = 1 would be a good selection. Spikes at after year 1 are also seen in both plots so a SARIMA(1,1,1)(1,1,1)12 will be chosen. 
+
+
+
+
+```{r acf-plot, echo=F, fig.cap="ACF plot", warning=FALSE, out.width='100%', fig.asp=0.55}
+acf(ddy_year ,lag.max = 48, main="ACF plot")
+```
+
+```{r pacf-plot, echo=F, fig.cap="PACF plot", warning=FALSE, out.width='100%', fig.asp=0.55}
+pacf(ddy_year ,lag.max = 48, main="PACF plot")
+```
+
+
+
+
+
+
+ 
+# Analysis
+
+For the built models the train dataset is used. The model is used to forecast and compare against the train dataset and accuracy measures are compared to determine what is the best model to forecast.
+
+First a base-line model is built - a simplistic model from which the other models can be compared. This is a seasonal naive model which effectively takes the temperature value from 12 months ago and adds on an error value as a means of prediction and model fit. 
+
+## Seasonal Naive Model
+
+```{r naive, include=F}
+#for train take out season
+#value of month will be same value as month before plus some random error
+#he used the differences data
+#DO I USE DIFFEED DATA HERE, I DONT THINK 
+dy_year_t <- diff(ytrain, lag= 12)
+#Residual sd:  2.4078   = missing on average a temperature of 2.285 degrees C
+#diff order 1 
+ddy_year_t <- diff(dy_year_t)
+fit <- snaive(diff(ytrain)) #residual sd = 1.6588
+print(summary(fit))
+#check residuals, top data totally randonm at top
+#acf dont want any acf so not looking good, but only 3 so not bad
+```
+
+Figure \ref{fig:snaive-resid} shows model diagnostics for the seasonal naive method. Th top plot shows the residuals and a good model shows a white-noise process here. It does look quite random but perhaps some trends can be spotted from this plot.
+
+The ACF shows some significant plots which suggests there is a better model out there that can explain some of the trends. The residuals look normally distributed.
+
+
+```{r snaive-resid, echo=F, fig.cap="Seasonal Naive Model Diagnostics", warning=FALSE, out.width='100%', fig.asp=0.55}
+checkresiduals(fit, test=FALSE)
+```
+
+
+
+
+## Exponential Smoothing Model 
+
+An exponential smoothing model is built on the train data. This model assigns exponentially decreasing weights to past data as the data gets older. This allows it to pick up on underlying trends of the deseasonalised data. The output for this can be seen in the appendices.
+
+
+```{r ets, include=F}
+#can use the data itself
+#exponential smoothing
+#acf looks good 
+fit_ets <- ets(ytrain) #sigma = 0.0596 , same as residual sd
+print(summary(fit_ets))
+
+```
+
+Figure \ref{fig:ets-resid} shows model diagnostics. This model looks better as we have no significant ACF spikes and the residuals look random in the top plot.
+
+```{r ets-resid, echo=F, fig.asp=0.55, fig.cap="Exponential Smoothing Model  Diagnostics", message=FALSE, warning=FALSE, out.width='100%'}
+checkresiduals(fit_ets, plot=TRUE, test=FALSE)
+```
+
+
+
+
+
+## SARIMA Model
+
+To begin s simple ARIMA will be used model with the order derived from the PACF and ACF plots. A SARIMA(1,1,1)(1,1,1)12 model will be used which ensures a simple model but represents the ACF and PACF plots. 
+
+```{r arima 1, include=F}
+
+samfit1_yt<-Arima(ytrain, order=c(1,1,1), #sigma^2 estimated as 1.943:  log likelihood=-148.77
+#AIC=307.53
+             seasonal=c(1,1,1)
+             ,
+              #lamba=NULL,
+             include.constant=TRUE
+             )
+
+autoplot(samfit1_yt) #dots on circle, not good
+summary(samfit1_yt)
+coeftest(samfit1_yt) #nothing significant
+ggtsdisplay(samfit1_yt$residuals) #pcf has 3 lines
+```
+
+In figure \ref{fig:ets-resid} the residuals demonstrate perhaps random behaviour, it is not as clear as the exponential smoothing model. No spikes are significant in the ACF plot and the residuals are normally distributed - all indicating a good model fit. 
+```{r sam1-resid, echo=F, fig.asp=0.55, fig.cap="SARIMA(1,1,1)(1,1,1)12 Model Diagnostics", message=FALSE, warning=FALSE, out.width='100%'}
+checkresiduals(samfit1_yt, test=FALSE) # have big line in acf, just 2
+```
+
+
+## Auto SARIMA Model
+
+R has a function which tests many different orders of the SARIMA model and using model diagnostics compares these models to find the best one. Since it was deemed difficult to choose the best SARIMA using the Box-Jenkins method using the ACF and PACF, using an algorithm that selected the best SARIMA model could be very useful here and therefore this function is ran.
+
+After running this function, R claims that the SARIMA(2,1,1)(2,1,0)12 model is the best model.
+
+```{r auroarim, include=F}
+
+fit_arima <- auto.arima(ytrain,d=1,D=1, stepwise = FALSE, approximation=FALSE, trace=TRUE) # sigma = sqrt(1.889) = 1.37
+print(summary(fit_arima))
+```
+
+
+
+In figure \ref{fig:auto-resid} the residuals demonstrate perhaps random. No spikes are significant in the ACF plot and the residuals are normally distributed - indicating a good model fit. 
+
+```{r auto-resid, echo=F, fig.asp=0.55, fig.cap="SARIMA(2,1,1)(2,1,0)12 Model Diagnostics", message=FALSE, warning=FALSE, out.width='100%'}
+checkresiduals(fit_arima, test=FALSE)
+```
+
+
+
+
+## Forecast
+
+The models are used to forecast 2 years into the future and compared with the test data. From this we can get various metrics which represent the accuracy of that prediction compares to the real test data. These values are given in Figure 14. Red colours are associated with poor performance and dark green are the best performance.
+
+Focusing on MAPE value, this is the Mean absolute percentage error. It takes the test values and the fitted values and calculates the absolute difference between the two as a percentage of the test value and calculates the mean. The lower the value the better. 
+
+The exponential smoothing model comes out as the best performing model for this metric, but also all the other metrics. The output for this model is given in the Appendix. This model be used for forecasting. It has a sigma value of 0.06 (2 d.p) meaning the model misses the actual temperature value by 0.06 degrees C on average - meaning it is very accurate.
+
+Surprisingly, our more parsimonious SARIMA model outperforms the automatically selected SARIMA model on the forecast data. 
+
+
+```{r fc autoarim, include=F}
+
+
+fc <- forecast(fit,h=24)
+accuracy(fc$mean, ytest)
+fc <- forecast(fit_ets,h=24)
+accuracy(fc$mean, ytest)
+fc <- forecast(samfit1_yt,h=24)
+accuracy(fc$mean, ytest)
+fc <- forecast(fit_arima,h=24)
+accuracy(fc$mean, ytest)
+
+
+
+```
+
+
+
+![Table of performance accuracy metrics of the models compared to the test data](00a - model metrics.png)
+
+
+
+Using the exponential smoothing model to forecast in the future, it's possible to see how the model predicts the future values, that is from 1989 to the end of 1990, compared to real data of these years. 
+
+
+Figure \ref{fig:expo-fc} shows the forecasted time series data . The red line of real values follows the black line forecasted line relatively closely, with some slight differences. 
+
+```{r expo-fc, echo=F, fig.asp=0.35, fig.cap="Exponential Smooting Model Forecast. From 1989 the black line represents forecasted data, the red line represents real data.", message=FALSE, warning=FALSE, out.width='100%'}
+fit_ets %>%
+  forecast(h=24) %>%
+  autoplot() + autolayer(ytest, series="Original data") +
+    labs(x="Time (Years)", y="emperature (degrees C)", title="Exponential Smoothing forecast")
+
+```
+
+For comparison sake, Figure \ref{fig:simp-fc} shows how the forecast for the Seasonal Naive model (this shows differenced data of order 1). The red line follows the black line, but not as well as the exponential but certainly the seasonal pattern is captured - so the forecast of the seasonal naive model visually looks quite good.
+
+This poses the question of, does our selected model capture the trend? Seemingly, the seasonal nature of a time series is relatively easy to forecast since it's something we know happens each year, but underlying trends are not. 
+```{r simp-fc, echo=F, fig.asp=0.35, fig.cap="Seasonal Naive  Model Forecast. From 1989 the black line represents forecasted data, the red line represents real data. ", message=FALSE, warning=FALSE, out.width='100%'}
+fit %>%
+  forecast(h=24) %>%
+  autoplot() + autolayer(diff(ytest), series="Original Data") +
+  labs(x="Time (Years)", y="Differenced Temperature (degrees C)", title="Seasonal naive forecast")
+```
+
+Previously it was seen that a time series could be broken up into different parts - one part being the trend. This can be used on the forecasted data to see how the trend compares with the trend of the original time series.
+
+Figure \ref{fig:exp-fc-trend} shows the forecasted trend data for the exponential smoothing model - namely the red line from 1988 (although the test data is from 1989 onward, trends are calculates using data before this date). The black line is the real data trend.
+
+The red line forecasted trend shows a dip, just like the real black line data shows, which is a good sign but doesn't predict the magnitude of the dip.
+
+The exponential smoothing method is seemingly picking up slightly on the cyclical nature of temperature fluctuations that happen on a 2-4 year basis. The temperature seems to go up a certain amount but comes back down again. This is what is observed from the data given, at least.
+
+```{r exp-fc-trend, echo=F, fig.asp=0.35, fig.cap="Exponential Smoothing Model Forecast of underlying trend, compared with real data trend. The red line starting from mid-1988 is the forecasted trend of the model. ", message=FALSE, warning=FALSE, out.width='100%'}
+fc <- forecast(fit_ets,h=24)
+#i would like to compare to see how it predicts the trend
+yall <- ts(temp_month$temp, frequency=12, start=c(1981,1))
+ogtrend <- x1$time.series[,"trend"]
+#based on this, does forecast get this right?
+#y goes up to 1989
+#fc$mean gives extra year of the forecast
+
+train_and_fc <- ts(c(ytrain, fc$mean),               # Combined time series object
+     start = start(y),
+     frequency = frequency(y))
+#now we have the combined time series
+#now get trend component
+#ts.plot(train_and_fc)
+#str(x)
+x2=stl(train_and_fc, s.window="periodic")
+#plot(x2)
+fctrend <- x2$time.series[,"trend"]
+#autoplot(ogtrend)
+autoplot(ogtrend, series="Original Trend") +
+  autolayer(fctrend,series="Forecasted Trend") +
+  labs(x="Time (Years)", y="Temperature (degrees C)", title="Exponential Smoothing trend forecast")
+```
+
+
+From the metrics the second best model is the SARIMA(1,1,1)(1,1,1)12 and for comparison sake the forecasted trend of this model is plotted in Figure \ref{fig:sam-fc-trend}. It shows that the ARIMA model assumes the trend will continue as a straight line and doesn't give a dip in temperatures like the exponential does. There is some slight dip there, but nowhere near the magnitude of the dip seen in the exponential model.
+
+
+```{r sam-fc-trend, echo=F, fig.asp=0.35, fig.cap="SARIMA(1,1,1)(1,1,1)12 Model Forecast of underlying trend, compared with real data trend. The red line starting from mid-1988 is the forecasted trend of the model.", message=FALSE, warning=FALSE, out.width='100%'}
+fc <- forecast(samfit1_yt,h=24)
+#i would like to compare to see how it predicts the trend
+yall <- ts(temp_month$temp, frequency=12, start=c(1981,1))
+ogtrend <- x1$time.series[,"trend"]
+#based on this, does forecast get this right?
+#y goes up to 1989
+#fc$mean gives extra year of the forecast
+
+train_and_fc <- ts(c(ytrain, fc$mean),               # Combined time series object
+     start = start(y),
+     frequency = frequency(y))
+#now we have the combined time series
+#now get trend component
+#ts.plot(train_and_fc)
+#str(x)
+x2=stl(train_and_fc, s.window="periodic")
+#plot(x2)
+fctrend <- x2$time.series[,"trend"]
+#autoplot(ogtrend)
+autoplot(ogtrend, series="Original Trend") +
+  autolayer(fctrend,series="Forecasted Trend") +
+  labs(x="Time (Years)", y="Temperature (degrees C)", title="SARIMA(1,1,1)(1,1,1)12 trend forecast")
+```
+
+
+
+
+
+# Conclusion
+
+Selecting an model that fits a time-series data isn't an exact science and choosing different models and testing and comparing their accuracy is the best approach to take. The autoarima function, which selected the best ARIMA model didn't fare as well when used on the test data as an ARIMA chosen using the Box-Jenkins method. Perhaps this was due to overfitting of the data and the fact that the model only had 7 years to model with (1981-1988). If this analysis were to be carried out again, more data would be required to get more accurate models. With the data we have, the Exponential Smoothing Model produces the best results and even detects a dip in the temperature trend which the other models fail to.
+
+
+# Appendix
+
+## Exponential Smoothing Model output
+```{r ets-append, eval=FALSE, include=FALSE}
+#can use the data itself
+#exponential smoothing
+#acf looks good 
+fit_ets <- ets(ytrain) #sigma = 0.0596 , same as residual sd
+print(summary(fit_ets))
+
+```
+
+
+
+
+# Citations
+```{r cites, eval=FALSE, include=FALSE}
+citation(package = "tidyverse")
+citation(package = "knitr")
+citation(package = "tibbletime")
+citation(package = "anomalize")
+citation(package = "timetk")
+citation(package = "forecast")
+citation(package = "tseries")
+citation(package = "dplyr")
+citation(package = "lubridate")
+citation(package = "TSstudio")
+citation(package = "zoo")
+citation(package = "ggplot2")
+citation(package = "lmtest")
+
+
+
+
+* Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43),
+  1686, https://doi.org/10.21105/joss.01686
+  
+* Yihui Xie (2020). knitr: A General-Purpose Package for Dynamic Report Generation in R. R
+  package version 1.30.
+
+* Yihui Xie (2015) Dynamic Documents with R and knitr. 2nd edition. Chapman and Hall/CRC. ISBN
+  978-1498716963
+
+* Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R. In Victoria
+  Stodden, Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational
+  Research. Chapman and Hall/CRC. ISBN 978-1466561595
+
+*  Davis Vaughan and Matt Dancho (2020). tibbletime: Time Aware Tibbles. R package version
+  0.1.6. https://CRAN.R-project.org/package=tibbletime
+
+* Matt Dancho and Davis Vaughan (2020). anomalize: Tidy Anomaly Detection. R package version
+  0.2.2. https://CRAN.R-project.org/package=anomalize
+
+* Matt Dancho and Davis Vaughan (2021). timetk: A Tool Kit for Working with Time Series in R. R
+  package version 2.6.1. https://CRAN.R-project.org/package=timetk
+
+* Hyndman R, Athanasopoulos G, Bergmeir C, Caceres G, Chhay L, O'Hara-Wild M, Petropoulos F,
+Razbash S, Wang E, Yasmeen F (2021). _forecast: Forecasting functions for time series and
+linear models_. R package version 8.14, <URL: https://pkg.robjhyndman.com/forecast/>. Hyndman RJ, Khandakar Y (2008). “Automatic time series forecasting: the forecast package for
+R.” _Journal of Statistical Software_, *26*(3), 1-22. <URL:
+https://www.jstatsoft.org/article/view/v027i03>.
+
+* Adrian Trapletti and Kurt Hornik (2020). tseries: Time Series Analysis and Computational
+  Finance. R package version 0.10-48.
+
+* Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2020). dplyr: A Grammar of
+  Data Manipulation. R package version 1.0.2. https://CRAN.R-project.org/package=dplyr
+
+* Garrett Grolemund, Hadley Wickham (2011). Dates and Times Made Easy with lubridate. Journal
+  of Statistical Software, 40(3), 1-25. URL http://www.jstatsoft.org/v40/i03/.
+
+* Rami Krispin (2020). TSstudio: Functions for Time Series Analysis and Forecasting. R package
+  version 0.1.6. https://CRAN.R-project.org/package=TSstudio
+
+* Achim Zeileis and Gabor Grothendieck (2005). zoo: S3 Infrastructure for Regular and Irregular
+  Time Series. Journal of Statistical Software, 14(6), 1-27. doi:10.18637/jss.v014.i06
+
+* H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+* Achim Zeileis, Torsten Hothorn (2002). Diagnostic Checking in Regression Relationships. R
+  News 2(3), 7-10. URL https://CRAN.R-project.org/doc/Rnews/
+
+
+
+```
+

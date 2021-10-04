@@ -1,0 +1,134 @@
+---
+title: "How public and journalist sentiment impacts the price of assets in the stock market and  cryptocurrency market"
+subtitle: "Extended Dissertation Proposal and Research Plan"
+author: "Ryan Pollard"
+date: "16/04/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Motivation for and summary of the project
+
+In early 2021, the impact of social media on the stock market gained notoriety when the price of GameStop (GME) stock went from hovering around $20 to reaching the lofty heights of $347 dollars in just one month. This increase was  attributed to the collective frenzy that took place on the social media platform of Reddit, specifically the sub-forum known as "wallstreetbets" that encouraged users to buy more stock which in turn elevated the stock to those high prices.
+
+This was a clear demonstration of how public word-of-mouth can impact the stock market, but this kind of thing has happened for time immemorial. Before social media, word-of-mouth opinions about stocks would have also made an impact on the price of stocks. The difference now is these opinions are much more visible, and important for this project, they are recorded. 
+
+This project looks to investigate how public opinion on social media impacts the price of not only stock, but also cryptocurrencies - and we group these two by calling them *"assets"*. But public opinion need not be confined to social media, this project also includes news articles about assets and includes them as *"public opinion"*. These opinions of financial assets can be taken from popular social media sites of Reddit and Twitter and various news outlets and related to the change in prices of the asset. 
+
+The project allows for a further extension of analysis which will be the exploration of how public sentiment reacts to news about assets, and how both in conjunction impact the price of an asset.
+
+
+## An outline of the approach to be taken
+
+There are two main steps when it comes to approaching this analysis.
+
+1. Classifying the opinion of social media posts/ news articles.
+2. Finding the relationship between these opinions and change in asset price.
+
+### 1. Classifying posts/articles
+
+If you read social media posts and news articles you may not remember word for word what the post said, or every single point made in the text, however, you will come away knowing the general feeling, or sentiment of what you just read. For example, perhaps a social media poster may simply say *"I believe Bitcoin is going to be worth £1.2 million one day* and although the poster's believed price may not be remembered, the sentiment of the post - that bitcoin is going to increase in value - will be.
+
+In this example, this social media post can be classified as a *"positive"* sentiment for bitcoin. A post using skeptical language in regards to bitcoin can be classified as *"negative"*. 
+
+A statistical technique known as *Probabilistic Topic Modeling* which was applied to machine learning and outlined by David Blei et al can be used to analysed posts/articles  for the type of language they use regarding a certain asset at a time point, and the frequency of positive or negative posts can found for a particular asset. This then gives us a "sentiment score" - telling what is the public opinion of the asset, is it mainly positive, negative, or equal? This type of analysis is known as *Natural Language Processing (NLP)*.
+
+Classifying a post/article into positive and negative is a useful way to gauge public opinion, however, positive and negative posts can be classified further. For example, how positive is the post, perhaps the language of the post is hugely positive, so it can be classified as *"very positive"*. Perhaps the language used is positive, but tinged with some negativity of skepticism - and this could be classified as *"weakly positive"*. Further still, within the trading community there are trading behaviours known as *bearish* (many people following the trend of selling) and *bullish* (many people following the trend of buying) and the posts can be further classified into these groups.
+
+
+
+To summarise the above, the use of Topic modeling algorithms analyses the words of the original texts to uncover the underlying themes that run through them and how they change over time. Probabilistic Topic Modeling uses Latent Dirichlet Allocation and Gibbs Sampling to allocate posts/articles to topics. 
+
+
+### 2. Relating the classifications to the price of the asset. 
+
+Imagine the public sentiment of bitcoin today is 80% positive, 20% negative. Yesterday it was 75% positive, 25% negative. With this increase in positive public sentiment you may expect to get more buyers of bitcoin today, and therefore an increasing bitcoin price. 
+
+So the price of bitcoin is dependent on the public sentiment, we theorise.
+
+The price of bitcoin over time is a piece of time series data whose future price can be predicted from its previous values using a univariate time series analysis.
+
+If we believe public sentiment impacts this price, we can preform a multivariate time series analysis on the price of bitcoin which will then relate the changing public sentiment over time to the change price of bitcoin over time.
+
+
+## The organisation, structure and key properties of the data
+
+The data is publicly available and can be found through different sources. There are 3 sources of data that are of interest:
+
+1. Twitter 
+2. Reddit
+3. News
+
+Within that, we are interested in the three types of data:
+
+1. Stock market
+2. Cryptocurrency
+3. Prices of assets through time
+
+Each dataset contains a post or news article or a price and along with that the date of that information. Those two columns are all that is needed to do the analysis. However, there is scope to extend the analysis to additional data that appears in some datasets, such as the amount of times a social media post is "upvoted" which means a user has expressed support of that opinion by clicking an "upvote" button - this is in the reddit context. In the twitter context, this may be done with the amount retweets or amount of times a post has been favourited.
+
+Due to datasets having different timeframes and coming from different sources and topics, many datasets are chosen to work with initially as to match up their timeframes for the time series analysis.
+
+These datasets cover a large range of potential interests and different conclusions can be gained from them, but they may not all be used in the analysis. 
+
+| Data source | Topic  | Timeframe              | Notes                                               | URL                                                                                                 |
+|-------------|------------|------------------------|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| Twitter     | Stock  | 2015 - 2020            | 5 top companies only                                | https://www.kaggle.com/omermetinn/tweets-about-the-top-companies-from-2015-to-2020?select=Tweet.csv |
+| Twitter     | Stock  | April 2020 - July 2020 | Various high performing companies                   | https://www.kaggle.com/utkarshxy/stock-markettweets-lexicon-data                                    |
+| Twitter     | Stock  | Jul-18                 | Small datasets of tweets from financial influencers | https://www.kaggle.com/davidwallach/financial-tweets/version/1                                      |
+| Twitter     | Crypto | 2016 - 2019            | Bitcoin only                                        | https://www.kaggle.com/alaix14/bitcoin-tweets-20160101-to-20190329                                  |
+| Reddit      | Stock  | 2012 - 2021            |                                                     | https://www.kaggle.com/unanimad/reddit-rwallstreetbets                                              |
+| Reddit      | Crypto | 2017 - 2018            | 5 months only, various cryptocurrencies             | https://www.kaggle.com/nickreinerink/reddit-rcryptocurrency                                         |
+| Reddit      | Crypto | 2009 - 2019            | Bitcoin only                                        | https://www.kaggle.com/jerryfanelli/reddit-comments-containing-bitcoin-2009-to-2019                 |
+| News        | Stock  | 2009 - 2020            |                                                     | https://www.kaggle.com/miguelaenlle/massive-stock-news-analysis-db-for-nlpbacktests                 |
+| News        | Crypto | 2012 - 2018            | Headlines only                                      | https://www.kaggle.com/geraldm/headlines-for-major-crypto-from-2012-until-today                     |
+| Prices      | Stock  | 1999 - 2020            | Lots of companies                                   | https://www.kaggle.com/utkarshxy/stock-markettweets-lexicon-data                                    |
+| Prices      | Crypto | 2013 - 2018            | All crypto                                          | https://www.kaggle.com/jessevent/all-crypto-currencies                                              |
+| Prices      | Crypto | 2013 - 2021            | Bitcoin only                                        | https://www.statista.com/statistics/326707/bitcoin-price-index/                                     |
+| Prices      | Crypto | 2017 - 2021            | Top 10 crypto                                       | https://www.kaggle.com/kaushiksuresh147/top-10-cryptocurrencies-historical-dataset                  |
+
+
+
+## A summary of any required background literature.
+
+Literature are gathered from multiple sources online and in book form. There are pieces that are focussed on the theory and others which demonstrate the theory applying it with R. The following table gives some of the literature already explored and to be further explored in the project:
+
+*(L = Literature, R = R specific literature)*
+
+| Type | Title                                                                | URL                                                                                                                                                                                      |
+|--------|----------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| L    | Little Book of LDA                                                   | https://miningthedetails.com/LDA_Inference_Book/index.html                                                                                                                               |
+| L    | Understanding LDA                                                    | https://naturale0.github.io/natural%20language%20processing/LDA-1-background-topic-modelling                                                                                             |
+| L    | Introduction to Probabilistic Topic Models                           | https://www.eecis.udel.edu/~shatkay/Course/papers/UIntrotoTopicModelsBlei2011-5.pdf                                                                                                      |
+| L    | Introduction to Probabilistic Topic Models                           | https://www.mu-sigma.com/wp-content/uploads/2019/08/Introduction-to-Probabilistic-Topic-Modeling.pdf                                                                                     |
+| R    | R package: topicmodels                                               | https://cran.r-project.org/web/packages/topicmodels/vignettes/topicmodels.pdf                                                                                                            |
+| R    | Text Mining with R: A Tidy Approach                                  | https://bookdown.org/Maxine/tidy-text-mining/latent-dirichlet-allocation.html                                                                                                            |
+| R    | Beginner’s Guide to LDA Topic Modelling with R                       | https://towardsdatascience.com/beginners-guide-to-lda-topic-modelling-with-r-e57a5a8e7a25                                                                                                |
+| R    | Text Mining with R                                                   | https://www.tidytextmining.com/index.html                                                                                                                                                |
+| Both |   Text Mining with R: A Tidy Approach                                | https://www.amazon.com/gp/product/1491981652/ref=as_li_tl?ie=UTF8&tag=juliasilge-20&camp=1789&creative=9325&linkCode=as2&creativeASIN=1491981652&linkId=0e92d44b0aa39ab34608ffa582dbd490 |
+| Both | Multivariate Time Series Analysis: With R and Financial Applications | https://www.wiley.com/en-gb/Multivariate+Time+Series+Analysis%3A+With+R+and+Financial+Applications-p-9781118617908                                                                       |
+| R    | Multivariate TS Analysis                                             | https://bookdown.org/singh_pratap_tejendra/intro_time_series_r/multivariate-ts-analysis.html                                                                                             |
+| Both | Analysis of multivariate time-series using the MARSS package         | https://cran.r-project.org/web/packages/MARSS/vignettes/UserGuide.pdf                                                                                                                    |
+
+
+## Outcomes
+
+The expected completed project will be a multivariate time series that represents the relationship between the classified public and journalistic sentiment and the price of the asset. As an extension, the relationship between published news articles and public sentiment can also be explored.
+
+
+
+
+
+
+
+
+
+
+
+

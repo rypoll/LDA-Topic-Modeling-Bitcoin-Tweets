@@ -1,0 +1,25 @@
+{
+    "id": "B87C5347",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1629208507044.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "id": "e905c3b03276454f95dd70a0e93e4f58",
+        "name": "data_btc",
+        "title": "data_btc"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2734277151536,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1629208507044,
+    "read_only": false,
+    "read_only_alternatives": []
+}

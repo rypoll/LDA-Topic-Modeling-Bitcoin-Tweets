@@ -1,0 +1,25 @@
+{
+    "id": "872C0C7C",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1629208560463.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "id": "cbd1c55fe28c425ba504f56c6343719b",
+        "name": "myCorpus",
+        "title": "myCorpus"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2734277151536,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1629208560463,
+    "read_only": false,
+    "read_only_alternatives": []
+}

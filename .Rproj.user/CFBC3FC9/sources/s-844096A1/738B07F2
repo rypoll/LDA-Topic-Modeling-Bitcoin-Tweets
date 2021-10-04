@@ -1,0 +1,25 @@
+{
+    "id": "738B07F2",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1629208392857.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "id": "3085d27c6ef74619845c8936650c2509",
+        "name": "data",
+        "title": "data"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2734277151536,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1629208392857,
+    "read_only": false,
+    "read_only_alternatives": []
+}

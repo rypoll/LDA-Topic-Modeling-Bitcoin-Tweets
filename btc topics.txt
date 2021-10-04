@@ -1,0 +1,23 @@
+topic 0,  talking about how investing in bitcoin changed lives, good decision to invest
+topic 1 , bots/ marketing, using btc to refer to something else
+topic 2, btc updates, talking about where it is today. market analysis
+topic 3, predicting bitcoin as world currency
+topic 4: marketing/ buying bitcoin logistics
+topic 5: alt coin talk, bitcoin news updates
+topic 6: negativity about bitcoin and negative responses to bitcoin critics
+topic 7: misc bitcoin comments
+topic 8: talking about alt coins
+topic 9: bot updates/ marketing and linking stock market with btc market
+topic 10 : technicalities of bitcoin and bot marketing 
+topic 11: logistics of purchasing bitcoin
+topic 12: people promoting long term holding of bitcoin / bots/
+topic 13: transaction fee broadcast bots
+topic 14: promoting buying bitcoin , people talking about buying. not promoting selling of bitcoin, talks about selling in future or selling other assets to buy btc now.
+
+C:\Users\T430\Google Drive\00 - Masters\Disseration\00 - Actual Disseration\results\btc\btcD-210927-T-21.34.36
+
+
+
+topic 2 and topic 12 similar
+didnt split topic 6
+all contain tweets that are difficilt to classify,

@@ -1,0 +1,11 @@
+to describe lsa used
+https://medium.com/nanonets/topic-modeling-with-lsa-psla-lda-and-lda2vec-555ff65b0b05
+
+jens albrecht book too used for the iamge
+
+maybe use nmf for the analysis
+
+
+- $D$, the number of documents in the corpus
+- $N_d$, number of words in each document *d*
+- $N$, total number of words in the corpus
